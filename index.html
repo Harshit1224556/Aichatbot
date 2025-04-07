@@ -1,128 +1,362 @@
+
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Weather App</title>
+    <title>Modern Weather App</title>
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap');
+        @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap');
+
+        :root {
+            --primary-color: #3498db;
+            --secondary-color: #2c3e50;
+            --bg-gradient-start: #6dd5ed;
+            --bg-gradient-end: #2193b0;
+            --container-bg: rgba(255, 255, 255, 0.2);
+            --text-color: #ffffff;
+            --input-bg: rgba(255, 255, 255, 0.8);
+            --input-text: #333;
+            --button-bg-start: #ff416c;
+            --button-bg-end: #ff4b2b;
+            --shadow-color: rgba(0, 0, 0, 0.2);
+            --error-color: #e74c3c;
+            --success-color: #2ecc71; /* Not used yet, but good practice */
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
 
         body {
             font-family: 'Poppins', sans-serif;
-            background: linear-gradient(135deg, #6DD5FA, #2980B9);
-            margin: 0;
-            padding: 0;
+            background: linear-gradient(135deg, var(--bg-gradient-start), var(--bg-gradient-end));
             display: flex;
             justify-content: center;
             align-items: center;
-            height: 100vh;
+            min-height: 100vh;
+            padding: 20px;
+            color: var(--text-color);
         }
 
         .container {
-            background: rgba(255, 255, 255, 0.15);
-            backdrop-filter: blur(10px);
-            padding: 40px 30px;
-            border-radius: 20px;
-            box-shadow: 0 8px 32px rgba(0,0,0,0.2);
+            background: var(--container-bg);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px); /* For Safari */
+            padding: 35px 40px;
+            border-radius: 25px;
+            box-shadow: 0 10px 35px var(--shadow-color);
             text-align: center;
-            max-width: 400px;
-            width: 90%;
-            color: #fff;
+            max-width: 450px;
+            width: 100%;
+            border: 1px solid rgba(255, 255, 255, 0.25);
+            overflow: hidden; /* Ensures content respects padding/border-radius */
         }
 
         h1 {
-            margin-bottom: 20px;
+            margin-bottom: 25px;
             font-weight: 600;
+            font-size: 2.2em;
+            letter-spacing: 1px;
         }
 
-        input {
-            width: 100%;
-            padding: 12px;
-            margin-bottom: 15px;
+        .search-box {
+            display: flex;
+            gap: 10px; /* Space between input and button */
+            margin-bottom: 25px;
+        }
+
+        input[type="text"] {
+            flex-grow: 1; /* Input takes available space */
+            padding: 14px 18px;
             border: none;
-            border-radius: 10px;
-            font-size: 16px;
+            border-radius: 12px;
+            font-size: 1rem;
             outline: none;
+            background-color: var(--input-bg);
+            color: var(--input-text);
+            font-family: inherit;
+            transition: box-shadow 0.3s ease;
         }
 
-        button {
-            width: 100%;
-            padding: 12px;
+        input[type="text"]::placeholder {
+            color: #888;
+        }
+
+        input[type="text"]:focus {
+            box-shadow: 0 0 0 3px rgba(52, 152, 219, 0.5); /* Focus indicator */
+        }
+
+        button#getWeatherBtn {
+            padding: 14px 20px;
             border: none;
-            border-radius: 10px;
-            background: #ff416c;
-            background: linear-gradient(to right, #ff4b2b, #ff416c);
+            border-radius: 12px;
+            background: linear-gradient(90deg, var(--button-bg-start), var(--button-bg-end));
             color: white;
-            font-size: 16px;
+            font-size: 1rem;
+            font-weight: 500;
             cursor: pointer;
-            transition: transform 0.2s ease;
+            transition: transform 0.2s ease, box-shadow 0.3s ease, opacity 0.3s ease;
+            white-space: nowrap; /* Prevent text wrapping */
         }
 
-        button:hover {
-            transform: scale(1.05);
+        button#getWeatherBtn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 15px rgba(0, 0, 0, 0.2);
+        }
+        button#getWeatherBtn:active {
+            transform: translateY(0px);
+            box-shadow: 0 3px 10px rgba(0, 0, 0, 0.15);
+        }
+        button#getWeatherBtn:disabled {
+             opacity: 0.6;
+             cursor: not-allowed;
+             transform: none;
+             box-shadow: none;
+        }
+
+        #loader {
+            display: none; /* Hidden by default */
+            margin: 20px auto;
+            border: 4px solid rgba(255, 255, 255, 0.3);
+            border-radius: 50%;
+            border-top: 4px solid var(--text-color);
+            width: 30px;
+            height: 30px;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        #errorMessage {
+            display: none; /* Hidden by default */
+            color: var(--error-color);
+            background-color: rgba(255, 255, 255, 0.8);
+            padding: 10px;
+            border-radius: 8px;
+            margin-top: 20px;
+            font-weight: 500;
         }
 
         #weatherResult {
-            display: none;
+            display: none; /* Initially hidden */
             margin-top: 25px;
+            animation: fadeIn 0.5s ease-in-out;
         }
 
-        #weatherResult img {
-            width: 100px;
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
         }
 
-        .info {
-            font-size: 18px;
-            margin: 8px 0;
+        #location {
+            font-size: 1.6em;
+            font-weight: 500;
+            margin-bottom: 5px;
         }
+
+        #weatherIcon {
+            width: 100px; /* Adjust as needed */
+            height: 100px;
+            margin: 5px 0;
+            filter: drop-shadow(0 4px 6px rgba(0,0,0,0.1)); /* Subtle shadow for icon */
+        }
+
+        #temperature {
+            font-size: 2.8em;
+            font-weight: 700;
+            margin: 0;
+            line-height: 1; /* Adjust line height */
+        }
+
+        #condition {
+            font-size: 1.2em;
+            font-weight: 400;
+            margin-top: 5px;
+            margin-bottom: 20px;
+            text-transform: capitalize;
+        }
+
+        .details-container {
+            display: flex;
+            justify-content: space-around; /* Distribute space */
+            align-items: center;
+            margin-top: 15px;
+            background: rgba(0, 0, 0, 0.1);
+            padding: 15px 10px;
+            border-radius: 12px;
+        }
+
+        .detail-item {
+            display: flex;
+            flex-direction: column; /* Stack label and value */
+            align-items: center;
+            font-size: 0.95em;
+        }
+
+        .detail-label {
+            font-weight: 300;
+            font-size: 0.8em;
+            margin-bottom: 3px;
+            opacity: 0.8;
+        }
+
+        .detail-value {
+            font-weight: 500;
+        }
+
     </style>
 </head>
 <body>
 
 <div class="container">
-    <h1>Weather App</h1>
-    <input type="text" id="cityInput" placeholder="Enter city name...">
-    <button onclick="getWeather()">Get Weather</button>
+    <h1>Weather Now</h1>
+    <div class="search-box">
+        <input type="text" id="cityInput" placeholder="Enter city name...">
+        <button id="getWeatherBtn">Search</button>
+        <!-- Changed button text and ID for clarity -->
+    </div>
 
+    <!-- Loading Indicator -->
+    <div id="loader"></div>
+
+    <!-- Error Message Area -->
+    <div id="errorMessage"></div>
+
+    <!-- Weather Results Area -->
     <div id="weatherResult">
         <h2 id="location"></h2>
-        <img id="weatherIcon" src="" alt="">
-        <div class="info" id="temperature"></div>
-        <div class="info" id="condition"></div>
-        <div class="info" id="humidity"></div>
-        <div class="info" id="wind"></div>
+        <img id="weatherIcon" src="" alt="Weather Icon">
+        <div id="temperature"></div>
+        <div id="condition"></div>
+
+        <div class="details-container">
+            <div class="detail-item">
+                <span class="detail-label">Humidity</span>
+                <span id="humidity" class="detail-value"></span>
+            </div>
+            <div class="detail-item">
+                <span class="detail-label">Wind Speed</span>
+                <span id="wind" class="detail-value"></span>
+            </div>
+            <!-- Add more details here if needed -->
+        </div>
     </div>
 </div>
 
 <script>
-    function getWeather() {
-        let city = document.getElementById("cityInput").value.trim();
+    const apiKey = "66e783ab39af4b319a5224716252802"; // Replace with your actual API key
+
+    const cityInput = document.getElementById('cityInput');
+    const getWeatherBtn = document.getElementById('getWeatherBtn');
+    const loader = document.getElementById('loader');
+    const errorMessageDiv = document.getElementById('errorMessage');
+    const weatherResultDiv = document.getElementById('weatherResult');
+
+    // --- Get references to result elements ---
+    const locationEl = document.getElementById('location');
+    const weatherIconEl = document.getElementById('weatherIcon');
+    const temperatureEl = document.getElementById('temperature');
+    const conditionEl = document.getElementById('condition');
+    const humidityEl = document.getElementById('humidity');
+    const windEl = document.getElementById('wind');
+
+    // --- Event Listeners ---
+    getWeatherBtn.addEventListener('click', fetchWeatherData);
+    cityInput.addEventListener('keypress', function(event) {
+        // Check if the key pressed was 'Enter'
+        if (event.key === 'Enter' || event.keyCode === 13) {
+            event.preventDefault(); // Prevent form submission if it were in a form
+            fetchWeatherData();
+        }
+    });
+
+
+    // --- Main Fetch Function ---
+    function fetchWeatherData() {
+        const city = cityInput.value.trim();
 
         if (!city) {
-            alert("Please enter a city name!");
+            displayError("Please enter a city name!");
             return;
         }
 
-        const apiKey = "66e783ab39af4b319a5224716252802";
-        const url = `https://api.weatherapi.com/v1/current.json?key=${apiKey}&q=${city}&aqi=yes`;
+        // --- Reset UI before fetching ---
+        showLoading(true);
+        displayError(null); // Clear previous errors
+        weatherResultDiv.style.display = 'none'; // Hide previous results
+        getWeatherBtn.disabled = true; // Disable button during fetch
+
+
+        const url = `https://api.weatherapi.com/v1/current.json?key=${apiKey}&q=${encodeURIComponent(city)}&aqi=no`; // encode city name
 
         fetch(url)
-            .then(response => response.json())
-            .then(data => {
-                document.getElementById("weatherResult").style.display = "block";
-                document.getElementById("location").innerText = `${data.location.name}, ${data.location.country}`;
-                document.getElementById("weatherIcon").src = data.current.condition.icon;
-                document.getElementById("temperature").innerText = `Temperature: ${data.current.temp_c}°C`;
-                document.getElementById("condition").innerText = `Condition: ${data.current.condition.text}`;
-                document.getElementById("humidity").innerText = `Humidity: ${data.current.humidity}%`;
-                document.getElementById("wind").innerText = `Wind: ${data.current.wind_kph} km/h`;
+            .then(response => {
+                if (!response.ok) {
+                    // Handle HTTP errors (like 404 Not Found, 401 Unauthorized)
+                    // Try to parse error message from API if available
+                    return response.json().then(errData => {
+                        throw new Error(errData.error?.message || `HTTP error! Status: ${response.status}`);
+                    });
+                }
+                return response.json();
             })
-            .catch(() => {
-                alert("City not found! Please enter a valid city.");
-                document.getElementById("weatherResult").style.display = "none";
+            .then(data => {
+                // Check for API-specific errors (e.g., city not found in their DB)
+                if (data.error) {
+                     throw new Error(data.error.message || "Unknown API error");
+                }
+                displayWeather(data);
+            })
+            .catch(error => {
+                console.error("Fetch error:", error);
+                displayError(error.message || "City not found or network error."); // Display caught error
+                weatherResultDiv.style.display = 'none'; // Ensure results are hidden on error
+            })
+            .finally(() => {
+                 showLoading(false); // Hide loader regardless of success or failure
+                 getWeatherBtn.disabled = false; // Re-enable button
             });
     }
+
+    // --- UI Update Functions ---
+
+    function displayWeather(data) {
+        locationEl.innerText = `${data.location.name}, ${data.location.country}`;
+        // Ensure icon URL starts with https: if it doesn't
+        weatherIconEl.src = data.current.condition.icon.startsWith('//') ? 'https:' + data.current.condition.icon : data.current.condition.icon;
+        weatherIconEl.alt = data.current.condition.text; // Set alt text
+        temperatureEl.innerText = `${Math.round(data.current.temp_c)}°C`; // Round temperature
+        conditionEl.innerText = data.current.condition.text;
+        humidityEl.innerText = `${data.current.humidity}%`;
+        windEl.innerText = `${data.current.wind_kph} km/h`;
+
+        weatherResultDiv.style.display = 'block'; // Show results section
+        errorMessageDiv.style.display = 'none'; // Hide error message if previously shown
+    }
+
+    function showLoading(isLoading) {
+        loader.style.display = isLoading ? 'block' : 'none';
+    }
+
+    function displayError(message) {
+        if (message) {
+            errorMessageDiv.innerText = message;
+            errorMessageDiv.style.display = 'block';
+        } else {
+            errorMessageDiv.style.display = 'none'; // Hide if message is null/empty
+        }
+    }
+
 </script>
 
 </body>
 </html>
+
+
